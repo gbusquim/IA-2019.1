@@ -1,9 +1,19 @@
 import math
+import copy
+from random import *
+from time import sleep
 
 class Route:
     def __init__(self, total_distance, nodes,current_capacity):
         self.total_distance = total_distance
         self.nodes = nodes
+        self.current_capacity = current_capacity
+
+
+class Distance:
+    def __init__(self, distance, node,current_capacity):
+        self.distance = distance
+        self.node = node
         self.current_capacity = current_capacity
 
 def CreateList(n):
@@ -14,9 +24,8 @@ def CreateList(n):
 def FindRoute(routes_list,node):
     for route in routes_list:
         if node in route.nodes:
-            route_length = len(route.nodes)
             node_position = route.nodes.index(node)
-            return(route,node_position == 1,node_position == route_length - 2)
+            return route,node_position
 
 
 def EuclideanDistance(x1,y1,x2,y2):
@@ -113,52 +122,253 @@ def InitialSolution(graph,demand_list,max_capacity,dimension):
         routes.append(new_route)
     return routes
 
+def FindNextPossibleRoute(routes,current_route_index,max_capacity,current_demand):
+    while(routes[current_route_index].current_capacity + current_demand > max_capacity):
+        #print(str(current_route_index) + '\n')
+        #sleep(0.1)
+        if current_route_index == len(routes) - 1:
+            current_route_index = 0
+        else:
+            current_route_index = current_route_index + 1
+    return routes[current_route_index]
 
 
+def Neighbourhood(graph,old_routes,dimension,demand_list,max_capacity):
+    new_routes = copy.copy(old_routes)
+    #print("---INCIO NEIGHBOUR----\n")
+    #for a in old_routes:
+        # print('No a ser retirado:' + str(node_high_average.node) + '\n')
+        # print('No antes dele: '+str(route.nodes[node_position-1])+ '\n')
+        # print('No depois dele: '+str(route.nodes[node_position+1])+ '\n')
+        # print('Rota atual: '+str(a.nodes) + '\n')
+        # print('Distancia atual: '+str(a.total_distance) + '\n')
+        # print('Capacidade atual: '+str(a.current_capacity) + '\n')
+    # print("Original routes " + '\n')
+    # for a in new_routes:
+    #     print(a.nodes)
+    #     print(a.total_distance)
+    #     print(a.current_capacity)
+    #get 5 biggest average distances
+    average_distances = []
+    for node in range(2,dimension + 1):
+        route,node_position = FindRoute(new_routes,node)
+        current_average_distance = Distance(graph[node][route.nodes[node_position-1]-1] + graph[node][route.nodes[node_position+1]-1],node,demand_list[node-1])
+        average_distances.append(current_average_distance)
+    average_distances.sort(key=lambda x: x.distance,reverse=True)
+    biggest_avg_distances = average_distances[0:5]
+    biggest_avg_distances_cap = copy.copy(biggest_avg_distances)
+    biggest_avg_distances_cap.sort(key=lambda x: x.current_capacity,reverse=True)
+
+    # print("Savings " + '\n')
+    # for a in biggest_avg_distances:
+    #     print('Node: ' + str(a.node))
+    #     print('Distance: '+ str(a.distance))
+
+    #remove nodes from routes
+
+
+    for node_high_average in biggest_avg_distances_cap:
+        route,node_position = FindRoute(new_routes,node_high_average.node)
+        # print('Rota enm que esta: '+str(route.nodes) + '\n')
+        new_total_distance = graph[node_high_average.node][route.nodes[node_position-1]-1] + \
+        graph[node_high_average.node][route.nodes[node_position+1]-1]
+
+        route_without_node = Route(route.total_distance-new_total_distance+
+        graph[route.nodes[node_position-1]][route.nodes[node_position+1]-1],
+        route.nodes[:node_position]+route.nodes[node_position+1:],
+        route.current_capacity - demand_list[node_high_average.node-1])
+        # print('No a ser retirado:' + str(node_high_average.node) + '\n')
+        # print('No antes dele: '+str(route.nodes[node_position-1])+ '\n')
+        # print('No depois dele: '+str(route.nodes[node_position+1])+ '\n')
+        # print('Rota atual: '+str(route_without_node.nodes) + '\n')
+        # print('Distancia atual: '+str(route_without_node.total_distance) + '\n')
+        new_routes.remove(route)
+        new_routes.append(route_without_node)
+    #print("---MEIO NEIGHBOUR----\n")
+    #for a in old_routes:
+        # print('No a ser retirado:' + str(node_high_average.node) + '\n')
+        # print('No antes dele: '+str(route.nodes[node_position-1])+ '\n')
+        # print('No depois dele: '+str(route.nodes[node_position+1])+ '\n')
+        # print('Rota atual: '+str(a.nodes) + '\n')
+        # print('Distancia atual: '+str(a.total_distance) + '\n')
+        # print('Capacidade atual: '+str(a.current_capacity) + '\n')
+    
+    # print("------------------NOVA ITERACAO------\n")
+    # print("New routes " + '\n')
+    # for a in new_routes:
+    #     print(a.nodes)
+    #     print(a.total_distance)
+    #     print(a.current_capacity)
+
+    # add nodes in random routes
+    
+    numof_routes = len(new_routes)
+    for node_high_average in biggest_avg_distances_cap:
+        #print('Rota de destino:' + str(destination_route.nodes) + '\n')
+        min_dist = float("inf")
+        node_before = -1
+        #destination_route_index = randint(0,numof_routes-1)
+        #print('Rota de destino:' + str(destination_route.nodes) + '\n')
+        #if new_routes[destination_route_index].current_capacity + demand_list[node_high_average.node-1] > max_capacity:
+        #print("No que nao da para entrar" + str(node_high_average.node) + '\n')
+            #destination_route = FindNextPossibleRoute(new_routes,destination_route_index,max_capacity,demand_list[node_high_average.node-1])
+       # else:
+            #destination_route = new_routes[destination_route_index]
+        routes_capacity_list = copy.copy(new_routes)
+        routes_capacity_list.sort(key=lambda x: x.total_distance,reverse=False)
+        cont = 0
+        # print("------------------------")
+        # for el in routes_capacity_list:
+        #     print(el.current_capacity)
+        while(routes_capacity_list[cont].current_capacity + demand_list[node_high_average.node-1] > max_capacity ):
+            cont = cont +1
+            if(cont>len(routes_capacity_list)-1):
+                print("fudeu")
+        destination_route = routes_capacity_list[cont]
+      
+
+
+        for cont in range(1,len(destination_route.nodes)):
+            curr_dist = destination_route.total_distance - graph[destination_route.nodes[cont-1]][destination_route.nodes[cont]-1] + \
+            graph[destination_route.nodes[cont-1]][node_high_average.node-1] + \
+            graph[node_high_average.node][destination_route.nodes[cont]-1]
+            if(curr_dist < min_dist):
+                min_dist = curr_dist
+                node_before = cont
+        #print('Rota de destino:' + str(destination_route.nodes) + '\n')
+        #print("---FIM NEIGHBOUR----\n")
+        #for a in old_routes:
+        # print('No a ser retirado:' + str(node_high_average.node) + '\n')
+        # print('No antes dele: '+str(route.nodes[node_position-1])+ '\n')
+        # print('No depois dele: '+str(route.nodes[node_position+1])+ '\n')
+            # print('Rota atual: '+str(a.nodes) + '\n')
+            # print('Distancia atual: '+str(a.total_distance) + '\n')
+            # print('Capacidade atual: '+str(a.current_capacity) + '\n')
+        improved_route = Route(min_dist,destination_route.nodes[:node_before]+[node_high_average.node]+destination_route.nodes[node_before:],
+        destination_route.current_capacity + demand_list[node_high_average.node-1])
+        new_routes.remove(destination_route)
+        new_routes.append(improved_route)
+
+
+
+
+    return new_routes
+
+
+            
+
+
+
+
+
+
+def RoutesCost(routes):
+    cost = 0
+    for route in routes:
+        cost = cost + route.total_distance
+    return cost
 
 
 
 
 
 def SimulatedAnnealing(graph,demand_list,max_capacity,dimension):
-    routes = InitialSolution(graph,demand_list,max_capacity,dimension)
+    current_routes = InitialSolution(graph,demand_list,max_capacity,dimension)
+    # print("ROTAS " + '\n')
+    # for a in current_routes:
+    #     print(a.nodes)
+    #     print(a.total_distance)
+    #     print(a.current_capacity)
+    #     print('\n')
+    alfa = 0.95
+    beta = 1.05
+    iterations_number = 500
+    temperature = 4000
     total_distance = 0
-    for route in routes:
-        total_distance = total_distance + route.total_distance
-    return total_distance,routes
+    while(temperature >= 0.01):
+        
+        while(iterations_number >= 0):
+            new_routes = Neighbourhood(graph,current_routes,dimension,demand_list,max_capacity)
+            cost_difference = RoutesCost(new_routes) - RoutesCost(current_routes)
+            print(cost_difference)
+            if(cost_difference < 0):
+                current_routes = copy.copy(new_routes)
+            else:
+                if(random() < math.exp(((-1)*cost_difference)/temperature)):
+                    current_routes = copy.copy(new_routes)
+            # print("---------------------------ITERACAO-----------------")
+            # for a in current_routes:
+            #     print('Rota atual: '+str(a.nodes) + '\n')
+            #     print('Distancia atual: '+str(a.total_distance) + '\n')
+            #     print('Capacidade atual: '+str(a.current_capacity) + '\n')
+                
+    # print("Iteracao " +str(iterations_number) + '\n')
+
+            iterations_number = iterations_number - 1
+        temperature = temperature * alfa
+        
+    # while(temperature > 0.01):
+    #     
+    #         
+    #         cost_difference = RoutesCost(new_routes) - RoutesCost(current_routes)
+    #         if(cost_difference < 0):
+    #             current_routes = copy.copy(new_routes)
+    #         else:
+    #             if(random() < math.exp(((-1)*cost_difference)/temperature)):
+    #                current_routes = copy.copy(new_routes)
+    #         
+    #     
+       # 
+    return current_routes
+
+
+
+
+graph,demand_list,max_capacity,dimension = CreateGraph("X-n115-k10.txt")
+ruimoutes = InitialSolution(graph,demand_list,max_capacity,dimension)
+bomoutes = SimulatedAnnealing(graph,demand_list,max_capacity,dimension)
+
+#routes = SimulatedAnnealing(graph,demand_list,max_capacity,dimension)
+# print(RoutesCost(ruimoutes))
+print(RoutesCost(bomoutes))
+# for a in bomoutes:
+#     print('Rota atual: '+str(a.nodes) + '\n')
+#     print('Distancia atual: '+str(a.total_distance) + '\n')
+#     print('Capacidade atual: '+str(a.current_capacity) + '\n')
+
+print(RoutesCost(bomoutes))
+
+    
 
 
 
 
 
-graph,demand_list,max_capacity,dimension = CreateGraph("X-n204-k19.txt")
-distance,routes = SimulatedAnnealing(graph,demand_list,max_capacity,dimension)
-print(distance)
+# print(distance)
 
-for el in routes:
-    print(el.nodes)
-    print(el.current_capacity)
+# for el in routes:
+#     print(el.nodes)
+#     print(el.current_capacity)
 
 
-r = Route(15,[0,1,0],30)
-r2 = Route(28,[0,5,4,0],80)
-r4 = Route(28,[0,5,4,0],80)
-r3 = Route(38,[0,6,8,0],90)
-r.current_capacity = 800
-#print(r.current_capacity)
-a = [1,2,3]
+# r = Route(15,[0,1,0],30)
+# r2 = Route(28,[0,5,4,0],80)
+# r4 = Route(28,[0,5,4,0],80)
+# r3 = Route(38,[0,6,8,0],90)
+# r2 = copy.copy(r3)
+# print(r2.current_capacity)
+# #print(r.current_capacity)
+# a = [1,2,3]
 
-#print(a)
-# lisat = r2.nodes[::-1][:-1]
-# print(lisat)
+# #print(a)
+# # lisat = r2.nodes[::-1][:-1]
+# # print(lisat)
 # a = [r,r2,r3]
 
 
-# print(r2.nodes == r4.nodes)
+# # print(r2.nodes == r4.nodes)
 
-# for el in a:
-#     if 5 in el.nodes:
-#         print(len(el.nodes))
+
 
 # print(a[1])
 # dict = {}

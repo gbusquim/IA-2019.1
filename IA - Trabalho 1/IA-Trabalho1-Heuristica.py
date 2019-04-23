@@ -111,7 +111,6 @@ def SavingsMethod(graph,demand_list,max_capacity,dimension):
                 pair_visited.append([neighbour,node])
         savings_list.sort(key=lambda x: x.distance,reverse=True)
     for saving in savings_list:
-        cont = cont +1
         client1 = saving.clients[0]
         client2 = saving.clients[1]
         demand_client1 = demand_list[client1-1]
