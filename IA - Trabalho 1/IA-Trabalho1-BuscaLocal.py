@@ -89,7 +89,6 @@ def CreateGraph(filename):
         demand_list.append(int(demand.split()[1]))
 
 
-
     return graph,demand_list,max_capacity,dimension
         
 #retorna uma solucao inicial
@@ -118,19 +117,29 @@ def Neighbourhood(graph,old_routes,dimension,demand_list,max_capacity):
     new_routes = copy.copy(old_routes)
 
     #obtem todas distancias medias para cada no
+
     average_distances = []
-    for node in range(2,dimension + 1):
-        route,node_position = FindRoute(new_routes,node)
-        current_average_distance = Distance(graph[node][route.nodes[node_position-1]-1] + graph[node][route.nodes[node_position+1]-1],node,demand_list[node-1])
+    for route in new_routes:
+        min_dist = 0
+        node_with_biggest_avg = -1
+        #acha maior distancia media em cada rota
+        for node in route.nodes:
+            if(node != 1):
+                node_position = route.nodes.index(node)
+                avg_distance = (graph[node][route.nodes[node_position-1]-1] + graph[node][route.nodes[node_position+1]-1])/2
+                if(avg_distance>min_dist):
+                    min_dist = avg_distance
+                    node_with_biggest_avg = node
+        current_average_distance = Distance(min_dist,node_with_biggest_avg,demand_list[node_with_biggest_avg-1])
         average_distances.append(current_average_distance)
 
-    #ordena lista e obtem 2 vertices com maior distancia media
+
+
+    #ordena lista e obtem as 10 maiores distancias
     average_distances.sort(key=lambda x: x.distance,reverse=True)
-    biggest_avg_distances = average_distances[0:2]
+    biggest_avg_distances = average_distances[0:10]
     #ordena de acordo com a capacidade
     biggest_avg_distances.sort(key=lambda x: x.current_capacity,reverse=True)
-
-
 
     #remove nos com maior distancia
     for node_high_average in biggest_avg_distances:
@@ -151,6 +160,7 @@ def Neighbourhood(graph,old_routes,dimension,demand_list,max_capacity):
     for node_high_average in biggest_avg_distances:
       
         min_dist = float("inf")
+        
         node_before = -1
 
         possible_route_list = []
@@ -178,6 +188,11 @@ def Neighbourhood(graph,old_routes,dimension,demand_list,max_capacity):
     return new_routes
 
 
+
+
+
+
+
             
 
 
@@ -198,8 +213,8 @@ def RoutesCost(routes):
 def SimulatedAnnealing(graph,demand_list,max_capacity,dimension):
     current_routes = InitialSolution(graph,demand_list,max_capacity,dimension)
     alfa = 0.99
-    iterations_number = 100
-    temperature = 5000
+    iterations_number = 1000
+    temperature = 1000
     while(temperature >= 0.01):       
         while(iterations_number >= 0):
             new_routes = Neighbourhood(graph,current_routes,dimension,demand_list,max_capacity)
@@ -209,8 +224,6 @@ def SimulatedAnnealing(graph,demand_list,max_capacity,dimension):
             else:
                 if(random() < math.exp(((-1)*cost_difference)/temperature)):
                     current_routes = copy.copy(new_routes)
-
-
             iterations_number = iterations_number - 1
         temperature = temperature * alfa
 
@@ -222,7 +235,7 @@ def SimulatedAnnealing(graph,demand_list,max_capacity,dimension):
 
 #leitura do arquivo e criacao do grafo
 
-graph,demand_list,max_capacity,dimension = CreateGraph("X-n101-k25.txt")
+graph,demand_list,max_capacity,dimension = CreateGraph("X-n204-k19.txt")
 
 total_distance,routes = SimulatedAnnealing(graph,demand_list,max_capacity,dimension)
 print('Rota encontradas:')
